@@ -1,4 +1,5 @@
 import os
+import json
 from flask import Flask, request, jsonify
 import requests
 
@@ -10,9 +11,29 @@ TRITON_URL = os.getenv(
 JSON_PREFIX = '{\n"answer": '
 
 
-def answer(user_query: str) -> dict:
+def gen_multi_answers(user_query: str) -> dict:
+    prompts = [
+        (
+            f"Respond in json format and only use the key answer. q: {user_query} \n```json\n{JSON_PREFIX}",
+            JSON_PREFIX,
+        ),
+        (
+            f"Respond in json format and only use the key answer. q: {user_query} \n```json\n",
+            "",
+        ),
+        (user_query, None),
+    ]
+
+    results = {}
+    for i, (prompt, json_prefix) in enumerate(prompts):
+        results["prompt" + str(i)] = answer(prompt, json_prefix)
+
+    return results
+
+
+def answer(user_query: str, json_prefix: str | None) -> dict:
     payload = {
-        "text_input": f"respond in json format and use only the key answer. q: {user_query} \n```json\n {JSON_PREFIX}",
+        "text_input": user_query,
         "max_tokens": 400,
         "bad_words": "",
         "stop_words": "```",
@@ -20,7 +41,17 @@ def answer(user_query: str) -> dict:
         "end_id": 2,
     }
     response = requests.post(TRITON_URL, json=payload)
-    return response.json()
+    result = response.json()
+    result = result["text_output"]
+    if json_prefix is not None:
+        result = json_prefix + result
+        result = result[: result.rfind("```")]
+    else:
+        result = json.dumps(result)
+        result = '{"answer": ' + f"{result}" + "}".strip()
+
+    result = json.loads(result)
+    return result
 
 
 @app.route("/query", methods=["POST"])
@@ -30,8 +61,7 @@ def query():
     if not user_query:
         return jsonify({"error": "Query parameter is required"}), 400
 
-    result = JSON_PREFIX + answer(user_query)["text_output"]
-    result = result[: result.rfind("```")]
+    result = gen_multi_answers(user_query)
     return jsonify(result)
 
 

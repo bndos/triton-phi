@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "triton_client"
+version = "0.1.0"
+description = ""
+authors = ["Brando <grover-brando.tovar-oblitas@polymtl.ca>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.32.3"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
