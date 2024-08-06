@@ -14,9 +14,6 @@ services:
               count: all
               capabilities: [gpu]
     privileged: true
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
 
   tritonapi:
     build:
@@ -25,7 +22,6 @@ services:
       - "5000:5000"
     environment:
       - TRITON_URL=http://tritonserverphi:8000/v2/models/ensemble/generate
-
 
 networks:
   tritonapi_default:
