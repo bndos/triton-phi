@@ -1,14 +1,11 @@
 #!/bin/bash
 set -e
 
-# Read in the file of environment settings
 . /mnt/.env
 
-# Convert checkpoint
 echo "Running Phi checkpoint conversion"
 python3 phi/convert_checkpoint.py --model_dir "${HF_PHI_MODEL}" --output_dir "${UNIFIED_CKPT_PATH}" --dtype float16
 
-# Build the TensorRT engine
 echo "Building TensorRT engine"
 trtllm-build --checkpoint_dir "${UNIFIED_CKPT_PATH}" \
              --remove_input_padding enable \
@@ -20,7 +17,6 @@ trtllm-build --checkpoint_dir "${UNIFIED_CKPT_PATH}" \
              --paged_kv_cache enable \
              --max_batch_size 64
 
-# Launch Triton server
 echo "Launching Triton server"
 python3 scripts/launch_triton_server.py --world_size 1 --model_repo=phi_ifb/
 tail -f /dev/null
