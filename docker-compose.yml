@@ -1,5 +1,6 @@
 services:
-  tritonserver-phi:
+  tritonserverphi:
+    container_name: tritonserverphi
     build:
       context: ./tensorrtllm_backend
     ports:
@@ -16,3 +17,16 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
       - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+  tritonapi:
+    build:
+      context: ./triton_api
+    ports:
+      - "5000:5000"
+    environment:
+      - TRITON_URL=http://tritonserverphi:8000/v2/models/ensemble/generate
+
+
+networks:
+  tritonapi_default:
+    external: true
